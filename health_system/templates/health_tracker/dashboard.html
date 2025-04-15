@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">个人健康管理系统</h2>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">体重/BMI趋势图</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="healthChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">添加新记录</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'add_weight' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.weight.label_tag }}
+                            {{ form.weight }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.height.label_tag }}
+                            {{ form.height }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.date.label_tag }}
+                            {{ form.date }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.note.label_tag }}
+                            {{ form.note }}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">保存记录</button>
+                    </form>
+                </div>
+            </div>
+            
+            {% if latest_record %}
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">最新数据</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>体重：</strong>{{ latest_record.weight }} kg</p>
+                    <p><strong>身高：</strong>{{ latest_record.height }} m</p>
+                    <p><strong>BMI：</strong>{{ latest_record.bmi }}</p>
+                    <p><strong>记录时间：</strong>{{ latest_record.date }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">历史记录（最近10条）</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>体重(kg)</th>
+                            <th>BMI</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.weight }}</td>
+                            <td>{{ record.bmi }}</td>
+                            <td>{{ record.note|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('healthChart');
+    const data = JSON.parse('{{ chart_data|escapejs }}');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.dates,
+            datasets: [
+                {
+                    label: '体重 (kg)',
+                    data: data.weights,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.3,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'BMI',
+                    data: data.bmis,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    tension: 0.3,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: { display: true, text: '体重(kg)' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: { display: true, text: 'BMI' },
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
