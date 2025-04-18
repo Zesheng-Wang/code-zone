@@ -1,4 +1,4 @@
-# django基础
+# 一、django基础
 
 ## 1. 基本概念
 
@@ -25,3 +25,10 @@ django-admin startproject projectname .
 python manage.py startapp appname
 ```
 
+## 5. 运行项目
+
+```django
+python manage.py runserver
+```
+
+## 6. Models
